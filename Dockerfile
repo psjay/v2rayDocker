@@ -1,27 +1,18 @@
 #
 # Builder
 #
-FROM abiosoft/caddy:builder as builder
-
-ARG version="0.11.1"
-ARG plugins="git,cors,realip,expires,cache"
-
-
-RUN go get -v github.com/abiosoft/parent
-RUN VERSION=${version} PLUGINS=${plugins} ENABLE_TELEMETRY=false /bin/sh /usr/bin/builder.sh
+FROM abiosoft/caddy:1.0.3 as builder
 
 #
 # Final stage
 #
-FROM alpine:3.8
-# process wrapper
-LABEL maintainer "sebs sebsclub@outlook.com"
+FROM alpine:3.10
 
 # V2RAY
 ARG TZ="Asia/Shanghai"
 
 ENV TZ ${TZ}
-ENV V2RAY_VERSION v4.21.3
+ENV V2RAY_VERSION v4.22.1
 ENV V2RAY_LOG_DIR /var/log/v2ray
 ENV V2RAY_CONFIG_DIR /etc/v2ray/
 ENV V2RAY_DOWNLOAD_URL https://github.com/v2ray/v2ray-core/releases/download/${V2RAY_VERSION}/v2ray-linux-64.zip
@@ -31,7 +22,7 @@ RUN apk upgrade --update \
         bash \
         tzdata \
         curl \
-    && mkdir -p \ 
+    && mkdir -p \
         ${V2RAY_LOG_DIR} \
         ${V2RAY_CONFIG_DIR} \
         /tmp/v2ray \
@@ -48,29 +39,20 @@ RUN apk upgrade --update \
     && echo ${TZ} > /etc/timezone \
     && rm -rf /tmp/v2ray /var/cache/apk/*
 
-# ADD entrypoint.sh /entrypoint.sh
 WORKDIR /srv
+
 # node
-# install node 
+# install node
 RUN apk add --no-cache util-linux
 RUN apk add --update nodejs nodejs-npm
 COPY package.json /srv/package.json
 RUN  npm install
 COPY  v2ray.js /srv/v2ray.js
 
-ARG version="0.11.1"
-LABEL caddy_version="$version"
-
-# Let's Encrypt Agreement
-ENV ACME_AGREE="false"
-
-# Telemetry Stats
-ENV ENABLE_TELEMETRY="false"
-
 RUN apk add --no-cache openssh-client git
 
 # install caddy
-COPY --from=builder /install/caddy /usr/bin/caddy
+COPY --from=builder /usr/bin/caddy /usr/bin/caddy
 
 # validate install
 RUN /usr/bin/caddy -version
@@ -78,14 +60,12 @@ RUN /usr/bin/caddy -plugins
 
 
 VOLUME /root/.caddy /srv
-# WORKDIR /srv
 
 COPY Caddyfile /etc/Caddyfile
 COPY index.html /srv/index.html
-# COPY package.json /etc/package.json
+
 # install process wrapper
-COPY --from=builder /go/bin/parent /bin/parent
+COPY --from=builder /bin/parent /bin/parent
 ADD caddy.sh /caddy.sh
 EXPOSE 443 80
 ENTRYPOINT ["/caddy.sh"]
-# CMD ["--conf", "/etc/Caddyfile", "--log", "stdout", "--agree=$ACME_AGREE"]
