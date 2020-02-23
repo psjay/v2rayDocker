@@ -20,6 +20,8 @@ domain
   proxy /one :2333 {
     websocket
     header_upstream -Origin
+    keepalive 128
+    timeout 3600
   }
 }
 
