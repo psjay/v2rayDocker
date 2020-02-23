@@ -61,7 +61,6 @@ RUN /usr/bin/caddy -plugins
 
 VOLUME /root/.caddy /srv
 
-COPY Caddyfile /etc/Caddyfile
 COPY index.html /srv/index.html
 
 # install process wrapper
