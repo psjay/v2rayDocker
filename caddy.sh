@@ -2,12 +2,16 @@
 # FILE="/etc/Caddy"
 domain="$1"
 psname="$2"
-uuid="51be9a06-299f-43b9-b713-1ec5eb76e3d7"
+uuid=""
+loglevel="warning"
 if  [ ! "$3" ] ;then
     uuid=$(uuidgen)
     echo "uuid 将会系统随机生成"
 else
     uuid="$3"
+fi
+if  [ "$4" ] ;then
+    loglevel="$4"
 fi
 cat > /etc/Caddyfile <<'EOF'
 domain
@@ -25,6 +29,9 @@ sed -i "s/domain/${domain}/" /etc/Caddyfile
 # v2ray
 cat > /etc/v2ray/config.json <<'EOF'
 {
+  "log": {
+    "loglevel": "loglevel_value"
+  },
   "inbounds": [
     {
       "port": 2333,
@@ -56,6 +63,7 @@ cat > /etc/v2ray/config.json <<'EOF'
 EOF
 
 sed -i "s/uuid/${uuid}/" /etc/v2ray/config.json
+sed -i "s/loglevel_value/${loglevel}/" /etc/v2ray/config.json
 
 cat > /srv/sebs.js <<'EOF'
  {
