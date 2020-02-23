@@ -21,7 +21,7 @@ domain
     websocket
     header_upstream -Origin
     keepalive 128
-    timeout 300
+    timeout 3600s
   }
 }
 
